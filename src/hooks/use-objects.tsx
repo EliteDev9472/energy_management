@@ -43,7 +43,7 @@ export function useObjects(options: UseObjectsOptions = {}) {
 }
 
 export function useObjectById(objectId: string | undefined) {
-  const [object, setObject] = useState<HierarchyObject | null>(null);
+  const [fetchObject, setFetchObject] = useState<HierarchyObject | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -55,7 +55,7 @@ export function useObjectById(objectId: string | undefined) {
       setError(null);
       try {
         const data = await objectService.getObjectById(objectId);
-        setObject(data);
+        setFetchObject(data);
       } catch (err) {
         console.error(`Error fetching object ${objectId}:`, err);
         setError(err instanceof Error ? err : new Error(`Failed to fetch object ${objectId}`));
@@ -72,7 +72,7 @@ export function useObjectById(objectId: string | undefined) {
     fetchObject();
   }, [objectId]);
 
-  return { object, loading, error };
+  return { fetchObject, loading, error };
 }
 
 export function useObjectsByComplex(complexId: string | undefined) {

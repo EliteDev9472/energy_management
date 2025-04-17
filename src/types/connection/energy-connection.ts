@@ -23,7 +23,7 @@ export interface EnergyConnection {
   inProgressDate?: string;
   activationDate?: string;
   isActiveSubscription?: boolean;
-  installer?: string;
+  installer?: any;
   meteringType?: string;
   hasFeedback?: boolean;
   meterRole?: 'main' | 'submeter' | 'mloea';

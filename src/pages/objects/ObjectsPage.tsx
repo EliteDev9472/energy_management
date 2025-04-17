@@ -14,7 +14,7 @@ export default function ObjectsPage() {
   const navigate = useNavigate();
   const { objects, loading, error } = useObjects();
   const [projects, setProjects] = useState<Record<string, Project>>({});
-  
+
   useEffect(() => {
     async function fetchProjects() {
       try {
@@ -29,13 +29,13 @@ export default function ObjectsPage() {
         console.error('Error fetching projects:', error);
       }
     }
-    
+
     fetchProjects();
   }, []);
 
   const handleAddConnection = (objectId: string, objectName: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent navigation to object details
-    
+
     // Navigate to new connection page with object pre-selected
     navigate(`/connections/new?objectId=${objectId}&objectName=${encodeURIComponent(objectName)}`);
   };
@@ -107,9 +107,9 @@ export default function ObjectsPage() {
                         <Database className="h-3 w-3" />
                         <span>{object.connectionCount || 0} meters</span>
                       </Badge>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
+                      <Button
+                        size="sm"
+                        variant="outline"
                         className="h-7 text-xs"
                         onClick={(e) => handleAddConnection(object.id, object.name, e)}
                       >
@@ -118,10 +118,10 @@ export default function ObjectsPage() {
                     </div>
                   </div>
                   <div className="mt-4 flex justify-between">
-                    <Button 
-                      variant="link" 
-                      size="sm" 
-                      className="text-xs p-0 h-auto" 
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="text-xs p-0 h-auto"
                       onClick={() => navigate(`/objects/${object.id}`)}
                     >
                       Details bekijken

@@ -64,15 +64,15 @@ export const energyConnectionService = {
       .from('energy_connections')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error fetching energy connections:', error);
       throw error;
     }
-    
+
     return data?.map(mapToEnergyConnection) || [];
   },
-  
+
   // Get energy connection by ID
   async getEnergyConnectionById(id: string) {
     const { data, error } = await supabase
@@ -80,15 +80,15 @@ export const energyConnectionService = {
       .select('*')
       .eq('id', id)
       .single();
-    
+
     if (error) {
       console.error(`Error fetching energy connection ${id}:`, error);
       throw error;
     }
-    
+
     return mapToEnergyConnection(data);
   },
-  
+
   // Get energy connections by project ID
   async getEnergyConnectionsByProjectId(projectId: string) {
     const { data, error } = await supabase
@@ -96,15 +96,15 @@ export const energyConnectionService = {
       .select('*')
       .eq('project_id', projectId)
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error fetching energy connections by project ID:', error);
       throw error;
     }
-    
+
     return data?.map(mapToEnergyConnection) || [];
   },
-  
+
   // Get energy connections by complex ID
   async getEnergyConnectionsByComplexId(complexId: string) {
     console.log('Fetching connections for complex ID:', complexId);
@@ -113,16 +113,16 @@ export const energyConnectionService = {
       .select('*')
       .eq('complex_id', complexId)
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error fetching energy connections by complex ID:', error);
       throw error;
     }
-    
+
     console.log('Found connections:', data);
     return data?.map(mapToEnergyConnection) || [];
   },
-  
+
   // Get energy connections by object ID
   async getEnergyConnectionsByObjectId(objectId: string) {
     console.log('Fetching connections for object ID:', objectId);
@@ -131,34 +131,34 @@ export const energyConnectionService = {
       .select('*')
       .eq('object_id', objectId)
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error fetching energy connections by object ID:', error);
       throw error;
     }
-    
+
     console.log('Found connections:', data);
     return data?.map(mapToEnergyConnection) || [];
   },
-  
+
   // Create a new energy connection
   async createEnergyConnection(connectionData: Partial<EnergyConnection>) {
     const dbData = mapToDbConnection(connectionData);
-    
+
     const { data, error } = await supabase
       .from('energy_connections')
       .insert([dbData])
       .select()
       .single();
-    
+
     if (error) {
       console.error('Error creating energy connection:', error);
       throw error;
     }
-    
+
     return mapToEnergyConnection(data);
   },
-  
+
   // Update energy connection status
   async updateConnectionStatus(connectionId: string, status: string) {
     const { data, error } = await supabase
@@ -167,39 +167,39 @@ export const energyConnectionService = {
       .eq('id', connectionId)
       .select()
       .single();
-    
+
     if (error) {
       console.error('Error updating connection status:', error);
       throw error;
     }
-    
+
     return mapToEnergyConnection(data);
   },
-  
+
   // Update energy connection
   async updateEnergyConnection(connectionId: string, connectionData: Partial<EnergyConnection>) {
     const dbData = mapToDbConnection(connectionData);
-    
+
     const { data, error } = await supabase
       .from('energy_connections')
       .update(dbData)
       .eq('id', connectionId)
       .select()
       .single();
-    
+
     if (error) {
       console.error('Error updating energy connection:', error);
       throw error;
     }
-    
+
     return mapToEnergyConnection(data);
   },
-  
+
   // Set EAN code for connection (used when connection becomes active)
   async setEANCode(connectionId: string, ean: string) {
     const { data, error } = await supabase
       .from('energy_connections')
-      .update({ 
+      .update({
         ean,
         status: 'actief',
         is_active_subscription: true,
@@ -208,12 +208,12 @@ export const energyConnectionService = {
       .eq('id', connectionId)
       .select()
       .single();
-    
+
     if (error) {
       console.error('Error setting EAN code:', error);
       throw error;
     }
-    
+
     return mapToEnergyConnection(data);
   }
 };

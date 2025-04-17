@@ -8,17 +8,167 @@ import { hierarchicalConnectionService } from '@/services/connections/hierarchic
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/utils/dateUtils';
 import { toast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { connectionRequestSchema, ConnectionRequestFormValues } from './schema/connectionRequestSchema';
+import { energyConnectionService } from '@/services/connections/energyConnectionService';
+import { EanCodeLookup } from '../connections/forms/EanCodeLookup';
+import { EanCodeInfo } from '@/utils/eanUtils';
+import { Input } from '@/components/ui/input';
 
 interface ConnectionRequestTabProps {
   objectId: string;
   projectId: string;
   connections: any[];
+  objectName: string,
   setConnections: (connections: any[]) => void;
 }
 
-export function ConnectionRequestTab({ objectId, projectId, connections, setConnections }: ConnectionRequestTabProps) {
+export function ConnectionRequestTab({ objectId, projectId, objectName, connections, setConnections }: ConnectionRequestTabProps) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [newElectricityDialogOpen, setNewElectricityDialogOpen] = useState(false);
+  const [newGasDialogOpen, setNewGasDialogOpen] = useState(false);
+
+  // Forms
+  const electricityForm = useForm<ConnectionRequestFormValues>({
+    resolver: zodResolver(connectionRequestSchema),
+    defaultValues: {
+      address: objectName,
+      city: 'Amsterdam',
+      postalCode: '1011XY',
+      type: 'electricity',
+      capacity: '3x25A',
+      gridOperator: 'liander',
+      desiredConnectionDate: new Date(new Date().setDate(new Date().getDate() + 60)).toISOString().split('T')[0],
+      installer: '',
+      installerEmail: '',
+      installerPhone: ''
+    }
+  });
+
+  const gasForm = useForm<ConnectionRequestFormValues>({
+    resolver: zodResolver(connectionRequestSchema),
+    defaultValues: {
+      address: objectName,
+      city: 'Amsterdam',
+      postalCode: '1011XY',
+      type: 'gas',
+      capacity: 'G4',
+      gridOperator: 'liander',
+      desiredConnectionDate: new Date(new Date().setDate(new Date().getDate() + 60)).toISOString().split('T')[0],
+      installer: '',
+      installerEmail: '',
+      installerPhone: ''
+    }
+  });
+
+  const handleElectricitySubmit = async (values: ConnectionRequestFormValues) => {
+    try {
+      console.log("Creating new electricity connection for object:", objectId, objectName);
+      const newConnection = await energyConnectionService.createEnergyConnection({
+        address: values.address,
+        city: values.city || 'Amsterdam',
+        postalCode: values.postalCode || '1011XY',
+        type: 'Elektriciteit',
+        status: 'Actief',
+        requestStatus: 'NEW',
+        capacity: values.capacity,
+        gridOperator: values.gridOperator,
+        objectId: objectId,
+        objectName: objectName,
+        desiredConnectionDate: new Date(values.desiredConnectionDate).toISOString(),
+        installer: values.installer ? {
+          name: values.installer,
+          email: values.installerEmail || '',
+          phone: values.installerPhone || ''
+        } : undefined,
+        ean: values.ean,
+        meterRole: 'main'
+      });
+
+      if (newConnection) {
+        setNewElectricityDialogOpen(false);
+
+        toast({
+          title: "Aanvraag aangemaakt",
+          description: "De aanvraag voor elektriciteitsaansluiting is aangemaakt.",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating electricity connection:', error);
+      toast({
+        title: "Fout bij aanmaken aansluiting",
+        description: "Er is een fout opgetreden bij het aanmaken van de aansluiting.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEanCodeFound = (info: EanCodeInfo, form: any) => {
+    form.setValue('address', info.address);
+    form.setValue('city', info.city);
+    form.setValue('postalCode', info.postalCode);
+    form.setValue('gridOperator', info.gridOperator);
+    form.setValue('capacity', info.capacity);
+
+    toast({
+      title: "EAN code gevonden",
+      description: "Adresgegevens zijn automatisch ingevuld.",
+    });
+  };
+
+  const handleGasSubmit = async (values: ConnectionRequestFormValues) => {
+    try {
+      console.log("Creating new gas connection for object:", objectId, objectName);
+      const newConnection = await energyConnectionService.createEnergyConnection({
+        address: values.address,
+        city: values.city || 'Amsterdam',
+        postalCode: values.postalCode || '1011XY',
+        type: 'Gas',
+        status: 'Actief',
+        requestStatus: 'NEW',
+        capacity: values.capacity,
+        gridOperator: values.gridOperator,
+        objectId: objectId,
+        objectName: objectName,
+        desiredConnectionDate: new Date(values.desiredConnectionDate).toISOString(),
+        installer: values.installer ? {
+          name: values.installer,
+          email: values.installerEmail || '',
+          phone: values.installerPhone || ''
+        } : undefined,
+        ean: values.ean,
+        meterRole: 'main'
+      });
+
+      if (newConnection) {
+        setNewGasDialogOpen(false);
+
+        toast({
+          title: "Aanvraag aangemaakt",
+          description: "De aanvraag voor gasaansluiting is aangemaakt.",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating gas connection:', error);
+      toast({
+        title: "Fout bij aanmaken aansluiting",
+        description: "Er is een fout opgetreden bij het aanmaken van de aansluiting.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchConnectionRequests = async () => {
     if (!objectId) return;
@@ -108,21 +258,21 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Aansluitingen aanvragen</h3>
+        <h3 className="text-lg font-medium">Aansluitingen aanvragen {objectName}</h3>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchConnectionRequests} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Vernieuwen
+          <Button onClick={() => setNewElectricityDialogOpen(true)}>
+            <Zap className="h-4 w-4 mr-2" />
+            Elektriciteitsaansluiting aanvragen
           </Button>
-          <Button onClick={handleCreateConnectionRequest}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe Aanvraag
+          <Button onClick={() => setNewGasDialogOpen(true)}>
+            <Flame className="h-4 w-4 mr-2" />
+            Gasaansluiting aanvragen
           </Button>
         </div>
       </div>
 
       <div className="flex gap-4 mb-6">
-        <Button 
+        <Button
           onClick={handleElectricityConnectionRequest}
           variant="outline"
           className="flex-1"
@@ -130,8 +280,8 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
           <Bolt className="h-4 w-4 mr-2 text-yellow-600" />
           Elektriciteitsaansluiting aanvragen
         </Button>
-        
-        <Button 
+
+        <Button
           onClick={handleGasConnectionRequest}
           variant="outline"
           className="flex-1"
@@ -153,7 +303,7 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
             </div>
           </div>
         </div>
-        
+
         <div className="bg-yellow-50 rounded-md border p-3 h-full min-h-[200px]">
           <div className="font-medium mb-3 flex justify-between">
             In behandeling
@@ -165,7 +315,7 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
             </div>
           </div>
         </div>
-        
+
         <div className="bg-purple-50 rounded-md border p-3 h-full min-h-[200px]">
           <div className="font-medium mb-3 flex justify-between">
             Offerte geaccepteerd
@@ -177,7 +327,7 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
             </div>
           </div>
         </div>
-        
+
         <div className="bg-indigo-50 rounded-md border p-3 h-full min-h-[200px]">
           <div className="font-medium mb-3 flex justify-between">
             Gepland
@@ -189,7 +339,7 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
             </div>
           </div>
         </div>
-        
+
         <div className="bg-amber-50 rounded-md border p-3 h-full min-h-[200px]">
           <div className="font-medium mb-3 flex justify-between">
             Uitvoering
@@ -201,7 +351,7 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
             </div>
           </div>
         </div>
-        
+
         <div className="bg-green-50 rounded-md border p-3 h-full min-h-[200px]">
           <div className="font-medium mb-3 flex justify-between">
             Aangesloten
@@ -213,7 +363,7 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
             </div>
           </div>
         </div>
-        
+
         <div className="bg-cyan-50 rounded-md border p-3 h-full min-h-[200px]">
           <div className="font-medium mb-3 flex justify-between">
             Contract aanvragen
@@ -250,8 +400,8 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
           <h3 className="text-lg font-medium mb-4">Recente aanvragen</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {connections.map((request) => (
-              <Card 
-                key={request.id} 
+              <Card
+                key={request.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => handleViewRequest(request.id)}
               >
@@ -266,7 +416,7 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
                       {getTypeBadge(request.type)}
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col gap-1 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Netbeheerder:</span>
@@ -289,7 +439,7 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="mt-4 flex justify-end">
                     <Button variant="ghost" size="sm" className="h-8">
                       Details <ChevronRight className="ml-1 h-4 w-4" />
@@ -301,6 +451,397 @@ export function ConnectionRequestTab({ objectId, projectId, connections, setConn
           </div>
         </div>
       )}
+
+      {/* Electricity Connection Dialog */}
+      <Dialog open={newElectricityDialogOpen} onOpenChange={setNewElectricityDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nieuwe elektriciteitsaansluiting</DialogTitle>
+            <DialogDescription>
+              Vul de gegevens in om een elektriciteitsaansluiting aan te vragen.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...electricityForm}>
+            <form onSubmit={electricityForm.handleSubmit(handleElectricitySubmit)} className="space-y-4">
+              <FormField
+                control={electricityForm.control}
+                name="ean"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>EAN Code (optioneel)</FormLabel>
+                    <FormControl>
+                      <EanCodeLookup
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onCodeFound={(info) => handleEanCodeFound(info, electricityForm)}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={electricityForm.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Adres</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={electricityForm.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Plaats</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={electricityForm.control}
+                  name="postalCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Postcode</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={electricityForm.control}
+                  name="capacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Capaciteit</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer capaciteit" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1x25A">1x25A</SelectItem>
+                          <SelectItem value="3x25A">3x25A</SelectItem>
+                          <SelectItem value="3x35A">3x35A</SelectItem>
+                          <SelectItem value="3x50A">3x50A</SelectItem>
+                          <SelectItem value="3x63A">3x63A</SelectItem>
+                          <SelectItem value="3x80A">3x80A</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={electricityForm.control}
+                  name="gridOperator"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Netbeheerder</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer netbeheerder" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="liander">Liander</SelectItem>
+                          <SelectItem value="stedin">Stedin</SelectItem>
+                          <SelectItem value="enexis">Enexis</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={electricityForm.control}
+                  name="desiredConnectionDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gewenste aansluitdatum</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={electricityForm.control}
+                name="installer"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Installateur</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Naam installateur" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={electricityForm.control}
+                  name="installerEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email installateur</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="Email installateur" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={electricityForm.control}
+                  name="installerPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefoon installateur</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Telefoon installateur" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setNewElectricityDialogOpen(false)}>
+                  Annuleren
+                </Button>
+                <Button type="submit">Aanvragen</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Gas Connection Dialog */}
+      <Dialog open={newGasDialogOpen} onOpenChange={setNewGasDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nieuwe gasaansluiting</DialogTitle>
+            <DialogDescription>
+              Vul de gegevens in om een gasaansluiting aan te vragen.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...gasForm}>
+            <form onSubmit={gasForm.handleSubmit(handleGasSubmit)} className="space-y-4">
+              <FormField
+                control={gasForm.control}
+                name="ean"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>EAN Code (optioneel)</FormLabel>
+                    <FormControl>
+                      <EanCodeLookup
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onCodeFound={(info) => handleEanCodeFound(info, gasForm)}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={gasForm.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Adres</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={gasForm.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Plaats</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={gasForm.control}
+                  name="postalCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Postcode</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={gasForm.control}
+                  name="capacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Capaciteit</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer capaciteit" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="G1.6">G1.6</SelectItem>
+                          <SelectItem value="G2.5">G2.5</SelectItem>
+                          <SelectItem value="G4">G4</SelectItem>
+                          <SelectItem value="G6">G6</SelectItem>
+                          <SelectItem value="G10">G10</SelectItem>
+                          <SelectItem value="G16">G16</SelectItem>
+                          <SelectItem value="G25">G25</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={gasForm.control}
+                  name="gridOperator"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Netbeheerder</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer netbeheerder" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="liander">Liander</SelectItem>
+                          <SelectItem value="stedin">Stedin</SelectItem>
+                          <SelectItem value="enexis">Enexis</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={gasForm.control}
+                  name="desiredConnectionDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gewenste aansluitdatum</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={gasForm.control}
+                name="installer"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Installateur</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Naam installateur" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={gasForm.control}
+                  name="installerEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email installateur</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="Email installateur" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={gasForm.control}
+                  name="installerPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefoon installateur</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Telefoon installateur" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setNewGasDialogOpen(false)}>
+                  Annuleren
+                </Button>
+                <Button type="submit">Aanvragen</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

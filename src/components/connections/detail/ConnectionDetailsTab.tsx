@@ -4,6 +4,7 @@ import { Grid2X2, Clock, Zap, MapPin, Building, User, Phone, Mail } from "lucide
 import { Badge } from "@/components/ui/badge";
 import { Connection } from "@/types/connection";
 import { ConnectionHierarchyInfo } from "./ConnectionHierarchyInfo";
+import { StatusBadge } from "../table/StatusBadge";
 
 interface ConnectionDetailsTabProps {
   connection: Connection;
@@ -28,7 +29,7 @@ export function ConnectionDetailsTab({ connection }: ConnectionDetailsTabProps) 
         return "default";
     }
   };
-  
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Connection Status Card */}
@@ -40,12 +41,7 @@ export function ConnectionDetailsTab({ connection }: ConnectionDetailsTabProps) 
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
-            <Badge 
-              variant={getBadgeVariant(connection.status) as any}
-              className="px-3 py-1"
-            >
-              {connection.status}
-            </Badge>
+            <StatusBadge status={connection.status} />
             {connection.lastModified && (
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -64,7 +60,7 @@ export function ConnectionDetailsTab({ connection }: ConnectionDetailsTabProps) 
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ConnectionHierarchyInfo 
+          <ConnectionHierarchyInfo
             organization={connection.organization}
             entity={connection.entity}
             project={connection.project}
