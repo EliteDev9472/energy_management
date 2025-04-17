@@ -221,7 +221,7 @@ export default function NewProjectPage() {
         projectManager: formData.projectManager || null,
         address: formData.address || '',
         city: formData.city || '',
-        building_phase: formData.buildingPhase,
+        buildingPhase: formData.buildingPhase,
         notes: '',
         connectionCount: 0
       };

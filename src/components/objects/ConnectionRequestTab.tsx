@@ -271,7 +271,7 @@ export function ConnectionRequestTab({ objectId, projectId, objectName, connecti
         </div>
       </div>
 
-      <div className="flex gap-4 mb-6">
+      {/* <div className="flex gap-4 mb-6">
         <Button
           onClick={handleElectricityConnectionRequest}
           variant="outline"
@@ -289,7 +289,7 @@ export function ConnectionRequestTab({ objectId, projectId, objectName, connecti
           <Flame className="h-4 w-4 mr-2 text-blue-600" />
           Gasaansluiting aanvragen
         </Button>
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         <div className="bg-blue-50 rounded-md border p-3 h-full min-h-[200px]">
@@ -377,7 +377,7 @@ export function ConnectionRequestTab({ objectId, projectId, objectName, connecti
         </div>
       </div>
 
-      {loading ? (
+      {/* {loading ? (
         <div className="flex justify-center items-center h-40">
           <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -450,7 +450,7 @@ export function ConnectionRequestTab({ objectId, projectId, objectName, connecti
             ))}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Electricity Connection Dialog */}
       <Dialog open={newElectricityDialogOpen} onOpenChange={setNewElectricityDialogOpen}>
