@@ -1,3 +1,4 @@
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EnergyConnection } from "@/types/connection/energy-connection";
 import { ConnectionRequestStatus } from "@/types/connection/pipeline";
@@ -53,9 +54,56 @@ const mapToDbConnection = (connection: Partial<EnergyConnection>) => {
     planned_connection_date: connection.plannedConnectionDate,
     grid_operator_work_number: connection.gridOperatorWorkNumber,
     meter_role: connection.meterRole,
-    metering_type: connection.meteringType
+    // metering_type: connection.meteringType
   };
 };
+
+function mapEnergyConnectionFromDB(data: any): EnergyConnection {
+  let installer;
+
+  if (data.installer) {
+    try {
+      installer = typeof data.installer === 'string'
+        ? JSON.parse(data.installer)
+        : data.installer;
+    } catch (e) {
+      console.error('Error parsing installer data:', e, data.installer);
+      installer = undefined;
+    }
+  }
+
+  let meteringType = data.metering_type;
+
+  // Safely parse strings to prevent errors with undefined/malformed data
+  return {
+    id: data.id,
+    address: data.address || '',
+    city: data.city || '',
+    postalCode: data.postal_code || '',
+    type: data.type || '',
+    status: data.status || '',
+    requestStatus: data.status as ConnectionRequestStatus,
+    capacity: data.capacity || '',
+    gridOperator: data.grid_operator || '',
+    projectId: data.project_id || null,
+    complexId: data.complex_id || null,
+    objectId: data.object_id || null,
+    objectName: data.object_name || '',
+    requestDate: data.request_date || null,
+    desiredConnectionDate: data.desired_connection_date || null,
+    ean: data.ean || null,
+    plannedConnectionDate: data.planned_connection_date || null,
+    gridOperatorWorkNumber: data.grid_operator_work_number || null,
+    inProgressDate: data.in_progress_date || null,
+    activationDate: data.activation_date || null,
+    isActiveSubscription: Boolean(data.is_active_subscription),
+    installer: installer,
+    meteringType: meteringType,
+    hasFeedback: false,
+    meterRole: (data.meter_role as 'main' | 'submeter' | 'mloea') || 'main'
+  };
+}
+
 
 export const energyConnectionService = {
   // Get all energy connections
@@ -177,22 +225,90 @@ export const energyConnectionService = {
   },
 
   // Update energy connection
-  async updateEnergyConnection(connectionId: string, connectionData: Partial<EnergyConnection>) {
-    const dbData = mapToDbConnection(connectionData);
+  async updateEnergyConnection(connection: Partial<EnergyConnection>) {
+    try {
+      if (!connection.id) {
+        throw new Error('Connection ID is required for update');
+      }
 
-    const { data, error } = await supabase
-      .from('energy_connections')
-      .update(dbData)
-      .eq('id', connectionId)
-      .select()
-      .single();
+      console.log('Updating energy connection:', connection.id, connection);
 
-    if (error) {
-      console.error('Error updating energy connection:', error);
-      throw error;
+      // Prepare data for Supabase
+      const updateData: any = {
+        address: connection.address,
+        city: connection.city,
+        postal_code: connection.postalCode,
+        type: connection.type,
+        status: connection.requestStatus,
+        capacity: connection.capacity,
+        grid_operator: connection.gridOperator,
+        desired_connection_date: connection.desiredConnectionDate,
+        grid_operator_work_number: connection.gridOperatorWorkNumber,
+        ean: connection.ean,
+        complex_id: connection.complexId,
+        planned_connection_date: connection.plannedConnectionDate,
+        last_modified: new Date().toISOString(),
+        meter_role: connection.meterRole,
+        metering_type: connection.meteringType
+      };
+
+      // Handle installer data
+      if (connection.installer) {
+        try {
+          updateData.installer = typeof connection.installer === 'string'
+            ? connection.installer
+            : JSON.stringify(connection.installer);
+        } catch (e) {
+          console.error('Error converting installer data to JSON:', e);
+        }
+      }
+
+      // Add special timestamp fields if present
+      if (connection.inProgressDate) {
+        updateData.in_progress_date = connection.inProgressDate;
+      }
+
+      if (connection.activationDate) {
+        updateData.activation_date = connection.activationDate;
+      }
+
+      if (connection.isActiveSubscription !== undefined) {
+        updateData.is_active_subscription = connection.isActiveSubscription;
+      }
+
+      const { data, error } = await supabase
+        .from('energy_connections')
+        .update(updateData)
+        .eq('id', connection.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating energy connection:', error);
+        toast({
+          title: "Fout bij bijwerken aansluiting",
+          description: error.message,
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      console.log('Updated energy connection:', data);
+      toast({
+        title: "Aansluiting bijgewerkt",
+        description: "De aansluitaanvraag is succesvol bijgewerkt.",
+      });
+
+      return mapEnergyConnectionFromDB(data);
+    } catch (error) {
+      console.error('Error in updateEnergyConnection:', error);
+      toast({
+        title: "Fout bij bijwerken aansluiting",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+      return null;
     }
-
-    return mapToEnergyConnection(data);
   },
 
   // Set EAN code for connection (used when connection becomes active)

@@ -74,7 +74,7 @@ export default function NewConnectionPage() {
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  
+
   const queryParams = new URLSearchParams(location.search);
   const preSelectedObjectId = queryParams.get('objectId') || '';
   const preSelectedObjectName = queryParams.get('objectName') || '';
@@ -85,7 +85,7 @@ export default function NewConnectionPage() {
   const preSelectedEntityId = queryParams.get('entityId') || '';
   const preSelectedEntityName = queryParams.get('entityName') || '';
   const preSelectedType = queryParams.get('connectionType') || 'electricity';
-  
+
   const [connectionForms, setConnectionForms] = useState<ConnectionFormData[]>([{
     ...emptyFormData(),
     organizationId: preSelectedOrganizationId,
@@ -99,15 +99,15 @@ export default function NewConnectionPage() {
     type: preSelectedType,
     id: '1'
   }]);
-  
+
   const [activeFormIndex, setActiveFormIndex] = useState(0);
-  
+
   const handleChange = (field: string, value: string, index: number = activeFormIndex) => {
     setConnectionForms(prev => {
       const newForms = [...prev];
-      
+
       const updatedForm = { ...newForms[index], [field]: value };
-      
+
       if (field === 'type') {
         if (value === 'electricity') {
           updatedForm.capacity = '3x25A';
@@ -119,7 +119,7 @@ export default function NewConnectionPage() {
           updatedForm.capacity = 'klein';
         }
       }
-      
+
       newForms[index] = updatedForm;
       return newForms;
     });
@@ -128,7 +128,7 @@ export default function NewConnectionPage() {
   const handleHierarchyChange = (level: string, id: string, name: string, index: number = activeFormIndex) => {
     setConnectionForms(prev => {
       const newForms = [...prev];
-      
+
       switch (level) {
         case 'organization':
           newForms[index] = {
@@ -171,7 +171,7 @@ export default function NewConnectionPage() {
           };
           break;
       }
-      
+
       return newForms;
     });
   };
@@ -179,23 +179,23 @@ export default function NewConnectionPage() {
   const handleEanCodeFound = (info: EanCodeInfo, index: number = activeFormIndex) => {
     setConnectionForms(prev => {
       const newForms = [...prev];
-      const currentForm = {...newForms[index]};
-      
+      const currentForm = { ...newForms[index] };
+
       const currentType = currentForm.type;
-      
+
       currentForm.address = info.address;
       currentForm.city = info.city;
       currentForm.postalCode = info.postalCode;
       currentForm.gridOperator = info.gridOperator;
-      
+
       if (info.connectionType.toLowerCase() === currentType) {
         currentForm.capacity = info.capacity;
       }
-      
+
       newForms[index] = currentForm;
       return newForms;
     });
-    
+
     toast({
       title: "EAN code gevonden",
       description: "Adresgegevens zijn automatisch ingevuld.",
@@ -204,7 +204,7 @@ export default function NewConnectionPage() {
 
   const addNewConnection = () => {
     const currentForm = connectionForms[activeFormIndex];
-    
+
     const newForm: ConnectionFormData = {
       ...emptyFormData(),
       organizationId: currentForm.organizationId,
@@ -217,9 +217,9 @@ export default function NewConnectionPage() {
       objectName: currentForm.objectName,
       id: Date.now().toString()
     };
-    
+
     setConnectionForms(prev => [...prev, newForm]);
-    
+
     setTimeout(() => {
       setActiveFormIndex(connectionForms.length);
       document.getElementById('new-connection-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -235,9 +235,9 @@ export default function NewConnectionPage() {
       });
       return;
     }
-    
+
     setConnectionForms(prev => prev.filter((_, i) => i !== index));
-    
+
     if (activeFormIndex >= index && activeFormIndex > 0) {
       setActiveFormIndex(activeFormIndex - 1);
     }
@@ -245,15 +245,15 @@ export default function NewConnectionPage() {
 
   const duplicateConnection = (index: number) => {
     const formToDuplicate = connectionForms[index];
-    
+
     const duplicatedForm: ConnectionFormData = {
       ...formToDuplicate,
       id: Date.now().toString(),
       ean: ''
     };
-    
+
     setConnectionForms(prev => [...prev, duplicatedForm]);
-    
+
     setTimeout(() => {
       setActiveFormIndex(connectionForms.length);
       document.getElementById('new-connection-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -267,7 +267,7 @@ export default function NewConnectionPage() {
 
   const handleImportedConnections = (importedData: ConnectionFormData[]) => {
     const hierarchyInfo = connectionForms[0];
-    
+
     const processedImports = importedData.map(form => ({
       ...form,
       organizationId: form.organizationId || hierarchyInfo.organizationId,
@@ -280,14 +280,14 @@ export default function NewConnectionPage() {
       objectName: form.objectName || hierarchyInfo.objectName,
       id: Date.now().toString() + Math.random().toString(36).substring(2, 11)
     }));
-    
+
     setConnectionForms(prev => [...prev, ...processedImports]);
-    
+
     setTimeout(() => {
       setActiveFormIndex(connectionForms.length);
       document.getElementById('new-connection-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
-    
+
     toast({
       title: "Import succesvol",
       description: `${processedImports.length} aansluitingen geïmporteerd`
@@ -297,7 +297,7 @@ export default function NewConnectionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       const validationErrors = connectionForms.map((form, index) => {
         if (!form.objectId) {
@@ -306,43 +306,43 @@ export default function NewConnectionPage() {
             message: "Een aansluiting moet aan een object gekoppeld zijn"
           };
         }
-        
+
         if (!form.address || !form.city || !form.postalCode) {
           return {
             index,
             message: "Adresgegevens ontbreken"
           };
         }
-        
+
         if (!form.ean || form.ean.trim() === '') {
           return {
             index,
             message: "EAN code is verplicht en mag niet leeg zijn"
           };
         }
-        
+
         return null;
       }).filter(error => error !== null);
-      
+
       if (validationErrors.length > 0) {
         const firstError = validationErrors[0]!;
         setActiveFormIndex(firstError.index);
-        
+
         toast({
           title: `Fout in aansluiting ${firstError.index + 1}`,
           description: firstError.message,
           variant: "destructive",
         });
-        
+
         setIsSubmitting(false);
         return;
       }
-      
+
       let successCount = 0;
-      
+
       for (let i = 0; i < connectionForms.length; i++) {
         const form = connectionForms[i];
-        
+
         const connectionData: Partial<Connection> = {
           address: form.address,
           city: form.city,
@@ -363,7 +363,7 @@ export default function NewConnectionPage() {
             conditions: ''
           }
         };
-        
+
         const hierarchyInfo = {
           organization: form.organizationId,
           entity: form.entityId,
@@ -371,7 +371,7 @@ export default function NewConnectionPage() {
           complex: form.complexId,
           object: form.objectId
         };
-        
+
         try {
           const result = await fetch('/api/connections/create', {
             method: 'POST',
@@ -383,15 +383,15 @@ export default function NewConnectionPage() {
               hierarchy: hierarchyInfo
             }),
           });
-          
+
           if (result.ok) {
             successCount++;
           }
         } catch (error) {
-          console.error(`Error saving connection ${i+1}:`, error);
+          console.error(`Error saving connection ${i + 1}:`, error);
         }
       }
-      
+
       if (successCount > 0) {
         toast({
           title: `${successCount} aansluitingen toegevoegd`,
@@ -425,7 +425,7 @@ export default function NewConnectionPage() {
             <p className="text-muted-foreground mt-1">Voeg aansluitingen toe</p>
           </div>
         </div>
-        
+
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-medium">Aansluitingen ({connectionForms.length})</h2>
@@ -440,34 +440,33 @@ export default function NewConnectionPage() {
             </Button>
           </div>
         </div>
-        
+
         <ScrollArea className="w-full mb-4" orientation="horizontal">
           <div className="flex space-x-2 min-w-max">
             {connectionForms.map((form, index) => (
-              <div 
-                key={form.id} 
-                className={`flex items-center ${
-                  index === activeFormIndex 
-                    ? 'bg-cedrus-green text-white' 
-                    : 'bg-muted hover:bg-muted/80'
-                } rounded-md px-3 py-2 cursor-pointer transition-colors`}
+              <div
+                key={form.id}
+                className={`flex items-center ${index === activeFormIndex
+                  ? 'bg-cedrus-green text-white'
+                  : 'bg-muted hover:bg-muted/80'
+                  } rounded-md px-3 py-2 cursor-pointer transition-colors`}
                 onClick={() => switchToForm(index)}
               >
                 <span className="text-sm mr-1">#{index + 1}</span>
                 <span className="text-sm max-w-40 truncate">
                   {form.address || `Aansluiting ${index + 1}`}
                 </span>
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className="ml-2 bg-background/20 text-foreground"
                 >
-                  {form.type === 'electricity' ? 'Elektra' : 
-                   form.type === 'gas' ? 'Gas' : 
-                   form.type === 'water' ? 'Water' : 'Warmte'}
+                  {form.type === 'electricity' ? 'Elektra' :
+                    form.type === 'gas' ? 'Gas' :
+                      form.type === 'water' ? 'Water' : 'Warmte'}
                 </Badge>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-5 w-5 ml-1 hover:bg-background/20"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -480,32 +479,32 @@ export default function NewConnectionPage() {
             ))}
           </div>
         </ScrollArea>
-        
+
         <Card className="mb-8" id="new-connection-form">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Aansluiting {activeFormIndex + 1}</CardTitle>
               <CardDescription>
-                {connectionForms[activeFormIndex].type === 'electricity' 
-                  ? 'Elektriciteitsaansluiting' 
+                {connectionForms[activeFormIndex].type === 'electricity'
+                  ? 'Elektriciteitsaansluiting'
                   : connectionForms[activeFormIndex].type === 'gas'
-                  ? 'Gasaansluiting'
-                  : connectionForms[activeFormIndex].type === 'water'
-                  ? 'Wateraansluiting'
-                  : 'Warmteaansluiting'}
+                    ? 'Gasaansluiting'
+                    : connectionForms[activeFormIndex].type === 'water'
+                      ? 'Wateraansluiting'
+                      : 'Warmteaansluiting'}
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => duplicateConnection(activeFormIndex)}
               >
                 <Copy className="h-4 w-4 mr-2" /> Dupliceren
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => removeConnection(activeFormIndex)}
                 disabled={connectionForms.length === 1}
               >
@@ -532,7 +531,7 @@ export default function NewConnectionPage() {
                   onObjectChange={(id, name) => handleHierarchyChange('object', id, name)}
                 />
               </div>
-              
+
               <div>
                 <EanCodeLookup
                   value={connectionForms[activeFormIndex].ean}
@@ -540,7 +539,7 @@ export default function NewConnectionPage() {
                   onCodeFound={(info) => handleEanCodeFound(info, activeFormIndex)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-base font-medium flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-muted-foreground" /> Adresgegevens
@@ -557,7 +556,7 @@ export default function NewConnectionPage() {
                       required
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor={`city-${activeFormIndex}`}>Plaats</Label>
@@ -570,7 +569,7 @@ export default function NewConnectionPage() {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor={`postalCode-${activeFormIndex}`}>Postcode</Label>
                       <Input
@@ -585,17 +584,17 @@ export default function NewConnectionPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-base font-medium flex items-center gap-2">
                   <Zap className="h-5 w-5 text-muted-foreground" /> Type & Capaciteit
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <ConnectionTypeSelector 
-                    value={connectionForms[activeFormIndex].type} 
-                    onChange={(value) => handleChange('type', value)} 
+                  <ConnectionTypeSelector
+                    value={connectionForms[activeFormIndex].type}
+                    onChange={(value) => handleChange('type', value)}
                   />
-                  
+
                   <CapacitySelector
                     connectionType={connectionForms[activeFormIndex].type}
                     value={connectionForms[activeFormIndex].capacity}
@@ -603,7 +602,7 @@ export default function NewConnectionPage() {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-base font-medium flex items-center gap-2">
                   <Gauge className="h-5 w-5 text-muted-foreground" /> Metergegevens
@@ -613,7 +612,7 @@ export default function NewConnectionPage() {
                     value={connectionForms[activeFormIndex].meterType}
                     onChange={(value) => handleChange('meterType', value)}
                   />
-                  
+
                   <div>
                     <Label htmlFor={`meterReading-${activeFormIndex}`}>Meterstand</Label>
                     <Input
@@ -626,7 +625,7 @@ export default function NewConnectionPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-base font-medium flex items-center gap-2">
                   <Building className="h-5 w-5 text-muted-foreground" /> Netbeheerder & Leverancier
@@ -651,7 +650,7 @@ export default function NewConnectionPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor={`supplier-${activeFormIndex}`}>Leverancier</Label>
                     <Input
@@ -662,7 +661,7 @@ export default function NewConnectionPage() {
                       className="mt-1"
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor={`meteringCompany-${activeFormIndex}`}>Meetbedrijf</Label>
                     <Input
@@ -675,7 +674,7 @@ export default function NewConnectionPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-base font-medium flex items-center gap-2">
                   <BadgeCheck className="h-5 w-5 text-muted-foreground" /> Status
@@ -690,23 +689,23 @@ export default function NewConnectionPage() {
             </form>
           </CardContent>
         </Card>
-        
+
         <div className="flex justify-center mb-6">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={addNewConnection}
             className="w-full max-w-md"
           >
             <Plus className="h-4 w-4 mr-2" /> Nog een aansluiting toevoegen
           </Button>
         </div>
-        
+
         <div className="sticky bottom-0 w-full bg-background border-t p-4 mt-8">
           <div className="max-w-3xl mx-auto flex justify-between items-center">
             <div>
               <p className="font-medium">Totaal: {connectionForms.length} aansluitingen</p>
               <p className="text-sm text-muted-foreground">
-                {connectionForms.filter(f => f.type === 'electricity').length} elektra, 
+                {connectionForms.filter(f => f.type === 'electricity').length} elektra,
                 {' '}{connectionForms.filter(f => f.type === 'gas').length} gas,
                 {' '}{connectionForms.filter(f => f.type === 'water').length} water,
                 {' '}{connectionForms.filter(f => f.type === 'heat').length} warmte
@@ -716,21 +715,21 @@ export default function NewConnectionPage() {
               <Button variant="outline" onClick={() => navigate('/connections')}>
                 Annuleren
               </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting} 
+              <Button
+                type="submit"
+                disabled={isSubmitting}
                 onClick={handleSubmit}
                 className="min-w-[180px]"
               >
-                {isSubmitting 
-                  ? 'Bezig met toevoegen...' 
+                {isSubmitting
+                  ? 'Bezig met toevoegen...'
                   : `${connectionForms.length} aansluitingen toevoegen`}
               </Button>
             </div>
           </div>
         </div>
       </div>
-      
+
       <ConnectionsImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}

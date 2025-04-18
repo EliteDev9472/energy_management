@@ -417,8 +417,8 @@ export default function ObjectDetailPage() {
               objectId={id || ''}
               projectId={project?.id || ''}
               objectName={object.name}
-              connections={connections}
-              setConnections={setConnections}
+            // connections={connections}
+            // setConnections={setConnections}
             />
           </TabsContent>
           <TabsContent value="contracts">

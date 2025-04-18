@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, FileText, FilterIcon, DownloadIcon, Zap, Gauge } from 'lucide-react';
-import EnergyConnectionPipeline from '@/components/connections/pipeline/EnergyConnectionPipeline';
+import { EnergyConnectionPipeline } from '@/components/connections/pipeline/EnergyConnectionPipeline';
 import { EnergyConnection } from '@/types/connection';
 import { toast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -29,7 +29,7 @@ interface NewConnectionFormValues {
   capacity: string;
   gridOperator: string;
   ean: string;
-  desiredConnectionDate: string;
+  desiredConnectionDate: string;is
 }
 
 const gasCapacityOptions = [
@@ -74,7 +74,7 @@ export default function ConnectionPipelinePage() {
   const [connections, setConnections] = useState<EnergyConnection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newConnectionDialogOpen, setNewConnectionDialogOpen] = useState(false);
-  
+
   const form = useForm<NewConnectionFormValues>({
     defaultValues: {
       address: '',
@@ -88,9 +88,9 @@ export default function ConnectionPipelinePage() {
       desiredConnectionDate: new Date(new Date().setDate(new Date().getDate() + 60)).toISOString().split('T')[0]
     }
   });
-  
+
   const selectedType = form.watch('type');
-  
+
   useEffect(() => {
     if (selectedType === 'electricity') {
       form.setValue('capacity', '3x25A');
@@ -102,7 +102,7 @@ export default function ConnectionPipelinePage() {
       form.setValue('capacity', 'klein');
     }
   }, [selectedType, form]);
-  
+
   useEffect(() => {
     const fetchConnections = async () => {
       setIsLoading(true);
@@ -126,7 +126,7 @@ export default function ConnectionPipelinePage() {
         setIsLoading(false);
       }
     };
-    
+
     fetchConnections();
   }, [projectId]);
 
@@ -156,7 +156,7 @@ export default function ConnectionPipelinePage() {
     form.setValue('gridOperator', info.gridOperator);
     form.setValue('type', info.connectionType.toLowerCase());
     form.setValue('capacity', info.capacity);
-    
+
     toast({
       title: "EAN code gevonden",
       description: "Adresgegevens zijn automatisch ingevuld.",
@@ -172,15 +172,15 @@ export default function ConnectionPipelinePage() {
       });
       return;
     }
-    
+
     try {
       const newConnection = await energyConnectionService.createEnergyConnection({
         address: values.address,
         city: values.city,
         postalCode: values.postalCode,
-        type: values.type === 'electricity' ? 'Elektriciteit' : 
-              values.type === 'gas' ? 'Gas' : 
-              values.type === 'water' ? 'Water' : 'Warmte',
+        type: values.type === 'electricity' ? 'Elektriciteit' :
+          values.type === 'gas' ? 'Gas' :
+            values.type === 'water' ? 'Water' : 'Warmte',
         status: "NEW",
         requestStatus: "NEW" as ConnectionRequestStatus,
         capacity: values.capacity,
@@ -195,12 +195,12 @@ export default function ConnectionPipelinePage() {
 
       if (newConnection) {
         setConnections([...connections, newConnection]);
-        
+
         toast({
           title: "Nieuwe aansluitaanvraag",
           description: "De aanvraag is succesvol aangemaakt."
         });
-        
+
         setNewConnectionDialogOpen(false);
       }
     } catch (error) {
@@ -251,7 +251,7 @@ export default function ConnectionPipelinePage() {
           <div>
             <p className="font-medium">Over het aansluitingsproces</p>
             <p className="text-sm mt-1">
-              Dit proces volgt de aanvraag tot realisatie van aansluitingen bij netbeheerders zoals gebruikt in MijnAansluiting.nl. 
+              Dit proces volgt de aanvraag tot realisatie van aansluitingen bij netbeheerders zoals gebruikt in MijnAansluiting.nl.
               Sleep aanvragen naar een volgende fase of gebruik de actieknoppen om de status bij te werken.
             </p>
           </div>
@@ -265,7 +265,7 @@ export default function ConnectionPipelinePage() {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cedrus-accent"></div>
                 </div>
               ) : (
-                <EnergyConnectionPipeline 
+                <EnergyConnectionPipeline
                   projectId={projectId || ""}
                   connections={connections}
                   setConnections={setConnections}
@@ -284,7 +284,7 @@ export default function ConnectionPipelinePage() {
               Voer de gegevens in voor de nieuwe energieaansluiting
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmitNewConnection)} className="space-y-6">
               {/* Hierarchy information would go here in a real implementation */}
@@ -294,7 +294,7 @@ export default function ConnectionPipelinePage() {
                   In een volledig systeem zou hier de hiërarchie selectie komen (organisatie, entiteit, project, object)
                 </p>
               </div>
-              
+
               {/* EAN Code Section */}
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Identificatie</h3>
@@ -312,7 +312,7 @@ export default function ConnectionPipelinePage() {
                   )}
                 />
               </div>
-              
+
               {/* Address Section */}
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Adresgegevens</h3>
@@ -328,7 +328,7 @@ export default function ConnectionPipelinePage() {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -342,7 +342,7 @@ export default function ConnectionPipelinePage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="postalCode"
@@ -357,7 +357,7 @@ export default function ConnectionPipelinePage() {
                   />
                 </div>
               </div>
-              
+
               {/* Connection Type Section */}
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Aansluiting Type</h3>
@@ -371,8 +371,8 @@ export default function ConnectionPipelinePage() {
                           <Zap className="h-4 w-4 text-muted-foreground" />
                           <FormLabel>Type aansluiting</FormLabel>
                         </div>
-                        <Select 
-                          onValueChange={field.onChange} 
+                        <Select
+                          onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -390,7 +390,7 @@ export default function ConnectionPipelinePage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="meterRole"
@@ -410,7 +410,7 @@ export default function ConnectionPipelinePage() {
                   />
                 </div>
               </div>
-              
+
               {/* Capacity Section */}
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Technische Gegevens</h3>
@@ -443,8 +443,8 @@ export default function ConnectionPipelinePage() {
                             </PopoverContent>
                           </Popover>
                         </div>
-                        <Select 
-                          onValueChange={field.onChange} 
+                        <Select
+                          onValueChange={field.onChange}
                           value={field.value}
                         >
                           <FormControl>
@@ -466,15 +466,15 @@ export default function ConnectionPipelinePage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="gridOperator"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Netbeheerder</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
+                        <Select
+                          onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -493,7 +493,7 @@ export default function ConnectionPipelinePage() {
                   />
                 </div>
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="desiredConnectionDate"
@@ -506,7 +506,7 @@ export default function ConnectionPipelinePage() {
                   </FormItem>
                 )}
               />
-              
+
               <DialogFooter>
                 <Button
                   type="button"
@@ -515,7 +515,7 @@ export default function ConnectionPipelinePage() {
                 >
                   Annuleren
                 </Button>
-                <Button 
+                <Button
                   type="submit"
                   disabled={!form.getValues().ean}
                 >
