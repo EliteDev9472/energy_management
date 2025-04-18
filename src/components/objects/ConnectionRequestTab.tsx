@@ -195,7 +195,10 @@ export function ConnectionRequestTab({ objectId, projectId, objectName }: Connec
         meterRole: values.meterRole,
         objectId: objectId,
         // ean: values.ean,
-        objectName: objectName
+        objectName: objectName,
+        name:values.name,
+        email:values.email,
+        phonenumber: values.phonenumber
       });
 
       if (newConnection) {

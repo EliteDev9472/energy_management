@@ -54,6 +54,9 @@ const mapToDbConnection = (connection: Partial<EnergyConnection>) => {
     planned_connection_date: connection.plannedConnectionDate,
     grid_operator_work_number: connection.gridOperatorWorkNumber,
     meter_role: connection.meterRole,
+    name: connection.name,
+    email: connection.email,
+    phonenumber: connection.phonenumber
     // metering_type: connection.meteringType
   };
 };
@@ -192,7 +195,6 @@ export const energyConnectionService = {
   // Create a new energy connection
   async createEnergyConnection(connectionData: Partial<EnergyConnection>) {
     const dbData = mapToDbConnection(connectionData);
-
     const { data, error } = await supabase
       .from('energy_connections')
       .insert([dbData])

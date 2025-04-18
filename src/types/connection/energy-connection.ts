@@ -27,4 +27,7 @@ export interface EnergyConnection {
   meteringType?: string;
   hasFeedback?: boolean;
   meterRole?: 'main' | 'submeter' | 'mloea';
+  name: string;
+  email: string;
+  phonenumber: string;
 }
