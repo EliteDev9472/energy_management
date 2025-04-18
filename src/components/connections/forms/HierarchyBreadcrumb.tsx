@@ -437,6 +437,7 @@ export function HierarchyBreadcrumb({
               </BreadcrumbItem>
             </>
           )}
+
         </BreadcrumbList>
       </Breadcrumb>
 

@@ -34,7 +34,6 @@ export default function ObjectDetailPage() {
 
   useEffect(() => {
     const fetchObjectDetails = async () => {
-      console.log('*************', id)
       if (!id) return;
       setIsLoading(true)
       try {

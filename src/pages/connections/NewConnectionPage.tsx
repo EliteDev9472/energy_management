@@ -29,6 +29,8 @@ interface ConnectionFormData {
   entityName: string;
   projectId: string;
   projectName: string;
+  complexId: string;
+  complexName: string;
   objectId: string;
   objectName: string;
   address: string;
@@ -53,6 +55,8 @@ const emptyFormData = (): ConnectionFormData => ({
   entityName: '',
   projectId: '',
   projectName: '',
+  complexId: '',
+  complexName: '',
   objectId: '',
   objectName: '',
   address: '',
@@ -78,6 +82,8 @@ export default function NewConnectionPage() {
   const queryParams = new URLSearchParams(location.search);
   const preSelectedObjectId = queryParams.get('objectId') || '';
   const preSelectedObjectName = queryParams.get('objectName') || '';
+  const preSelectedComplexId = queryParams.get('complexId') || '';
+  const preSelectedComplexName = queryParams.get('complexName') || '';
   const preSelectedProjectId = queryParams.get('projectId') || '';
   const preSelectedProjectName = queryParams.get('projectName') || '';
   const preSelectedOrganizationId = queryParams.get('organizationId') || '';
@@ -96,6 +102,8 @@ export default function NewConnectionPage() {
     projectName: preSelectedProjectName,
     objectId: preSelectedObjectId,
     objectName: preSelectedObjectName,
+    complexId: preSelectedComplexId,
+    complexName: preSelectedComplexName,
     type: preSelectedType,
     id: '1'
   }]);
@@ -128,7 +136,6 @@ export default function NewConnectionPage() {
   const handleHierarchyChange = (level: string, id: string, name: string, index: number = activeFormIndex) => {
     setConnectionForms(prev => {
       const newForms = [...prev];
-
       switch (level) {
         case 'organization':
           newForms[index] = {
@@ -139,6 +146,8 @@ export default function NewConnectionPage() {
             entityName: '',
             projectId: '',
             projectName: '',
+            complexId: '',
+            complexName: '',
             objectId: '',
             objectName: ''
           };
@@ -150,6 +159,8 @@ export default function NewConnectionPage() {
             entityName: name,
             projectId: '',
             projectName: '',
+            complexId: '',
+            complexName: '',
             objectId: '',
             objectName: ''
           };
@@ -159,6 +170,17 @@ export default function NewConnectionPage() {
             ...newForms[index],
             projectId: id,
             projectName: name,
+            complexId: '',
+            complexName: '',
+            objectId: '',
+            objectName: ''
+          };
+          break;
+        case 'complex':
+          newForms[index] = {
+            ...newForms[index],
+            complexId: id,
+            complexName: name,
             objectId: '',
             objectName: ''
           };
@@ -213,6 +235,8 @@ export default function NewConnectionPage() {
       entityName: currentForm.entityName,
       projectId: currentForm.projectId,
       projectName: currentForm.projectName,
+      complexId: currentForm.complexId,
+      complexName: currentForm.complexName,
       objectId: currentForm.objectId,
       objectName: currentForm.objectName,
       id: Date.now().toString()
@@ -276,6 +300,8 @@ export default function NewConnectionPage() {
       entityName: form.entityName || hierarchyInfo.entityName,
       projectId: form.projectId || hierarchyInfo.projectId,
       projectName: form.projectName || hierarchyInfo.projectName,
+      complexId: form.complexId || hierarchyInfo.complexId,
+      complexName: form.complexName || hierarchyInfo.complexName,
       objectId: form.objectId || hierarchyInfo.objectId,
       objectName: form.objectName || hierarchyInfo.objectName,
       id: Date.now().toString() + Math.random().toString(36).substring(2, 11)
@@ -522,7 +548,7 @@ export default function NewConnectionPage() {
                   selectedOrganization={connectionForms[activeFormIndex].organizationId}
                   selectedEntity={connectionForms[activeFormIndex].entityId}
                   selectedProject={connectionForms[activeFormIndex].projectId}
-                  selectedComplex={connectionForms[activeFormIndex].complexId || ""}
+                  selectedComplex={connectionForms[activeFormIndex].complexId}
                   selectedObject={connectionForms[activeFormIndex].objectId}
                   onOrganizationChange={(id, name) => handleHierarchyChange('organization', id, name)}
                   onEntityChange={(id, name) => handleHierarchyChange('entity', id, name)}

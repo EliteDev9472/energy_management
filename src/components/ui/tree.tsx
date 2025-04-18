@@ -9,7 +9,6 @@ interface TreeProps {
 }
 
 export function Tree({ children, className }: TreeProps) {
-  console.log('------Tree-----------', children)
   return (
     <div className={cn("space-y-1", className)}>
       {children}
